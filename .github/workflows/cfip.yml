@@ -1,0 +1,25 @@
+name: cfip
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Speedtest
+        run: |
+          mkdir -p results
+          curl -sL https://github.com/XIU2/CloudflareSpeedTest/releases/latest/download/cfst_linux_amd64.tar.gz | tar xz
+          ./cfst -dn 10 -tl 200 -o results/result.csv
+          tail -n +2 results/result.csv | cut -d, -f1 > results/ip.txt
+      - name: Commit
+        run: |
+          git config user.name github-actions
+          git add results
+          git config user.email actions@github.com
+          git commit -m "优选更新 $(date -u +%FT%TZ)" || exit 0
+          git push
