@@ -13,13 +13,17 @@ jobs:
       - name: Speedtest
         run: |
           mkdir -p results
-          curl -sL https://github.com/XIU2/CloudflareSpeedTest/releases/latest/download/cfst_linux_amd64.tar.gz | tar xz
+          URL=$(curl -fsSL https://api.github.com/repos/XIU2/CloudflareSpeedTest/releases/latest | grep browser_download_url | grep linux_amd64 | head -n 1 | cut -d '"' -f 4)
+          echo "下载地址: $URL"
+          curl -fSL -o cfst.tar.gz "$URL"
+          tar xzf cfst.tar.gz
+          chmod +x cfst
           ./cfst -dn 10 -tl 200 -o results/result.csv
           tail -n +2 results/result.csv | cut -d, -f1 > results/ip.txt
       - name: Commit
         run: |
           git config user.name github-actions
-          git add results
           git config user.email actions@github.com
+          git add results
           git commit -m "优选更新 $(date -u +%FT%TZ)" || exit 0
           git push
