@@ -17,15 +17,19 @@ jobs:
           echo "下载地址: $URL"
           curl -fSL -o cfst.tar.gz "$URL"
           tar xzf cfst.tar.gz -C cfst_dir
-          echo "解压内容:"
-          ls -R cfst_dir
           BIN=$(find cfst_dir -type f \( -name 'cfst' -o -name 'CloudflareST' \) | head -n 1)
           echo "程序路径: $BIN"
           chmod +x "$BIN"
           cd "$(dirname "$BIN")"
-          ./$(basename "$BIN") -dn 10 -tl 200 -o "$GITHUB_WORKSPACE/results/result.csv"
+          ./$(basename "$BIN") -dn 20 -tl 200 -url "https://speed.cloudflare.com/__down?bytes=50000000" -o "$GITHUB_WORKSPACE/results/result.csv"
           cd "$GITHUB_WORKSPACE"
-          tail -n +2 results/result.csv | cut -d, -f1 > results/ip.txt
+          awk -F, 'NR>1 && $6>0 {print $1}' results/result.csv | head -n 20 > results/ip.txt
+          if [ ! -s results/ip.txt ]; then
+            echo "没有测出下载速度，改用延迟排序"
+            tail -n +2 results/result.csv | head -n 20 | cut -d, -f1 > results/ip.txt
+          fi
+          echo "ip.txt 行数:"
+          wc -l results/ip.txt
       - name: Commit
         run: |
           git config user.name github-actions
