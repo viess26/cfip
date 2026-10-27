@@ -21,23 +21,7 @@ jobs:
           echo "程序路径: $BIN"
           chmod +x "$BIN"
           cd "$(dirname "$BIN")"
-          NAME=$(basename "$BIN")
-          OUT="$GITHUB_WORKSPACE/results/result.csv"
-          SPEED_URL="https://speed.cloudflare.com/__down?bytes=50000000"
-          ASIA="HKG,KHH,TPE,NRT,KIX,FUK,OKA,SIN,ICN"
-          rm -f "$OUT"
-
-          echo "第一轮：只测亚洲机房 ($ASIA)"
-          ./$NAME -httping -cfcolo "$ASIA" -dn 20 -tl 200 -url "$SPEED_URL" -o "$OUT" || true
-
-          if [ ! -f "$OUT" ] || [ "$(wc -l < "$OUT")" -le 1 ]; then
-            echo "没有测到亚洲机房，第二轮：不限地区（基本是美国）"
-            rm -f "$OUT"
-            ./$NAME -dn 20 -tl 200 -url "$SPEED_URL" -o "$OUT"
-          else
-            echo "已测到亚洲机房结果"
-          fi
-
+          ./$(basename "$BIN") -dn 20 -tl 200 -url "https://speed.cloudflare.com/__down?bytes=50000000" -o "$GITHUB_WORKSPACE/results/result.csv"
           cd "$GITHUB_WORKSPACE"
           awk -F, 'NR>1 && $6>0 {print $1}' results/result.csv | head -n 20 > results/ip.txt
           if [ ! -s results/ip.txt ]; then
